@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -9,25 +11,41 @@ void handle_sigterm(int sig)
 {
     (void)sig;
 
-    printf("Service shutting down...\n");
-
     running = 0;
 }
 
 int main(void)
 {
-    signal(SIGTERM,
-           handle_sigterm);
+    struct sigaction sa;
 
-    setbuf(stdout,
-           NULL);
+    sa.sa_handler = handle_sigterm;
+
+    sigemptyset(&sa.sa_mask);
+
+    sa.sa_flags = SA_RESTART;
+
+    if (sigaction(SIGTERM,
+                  &sa,
+                  NULL) < 0)
+    {
+        perror("sigaction");
+
+        return 1;
+    }
+
+    setbuf(stdout, NULL);
+
+    printf("Monitor service started. PID=%d\n",
+           getpid());
 
     while (running)
     {
         printf("Service is running...\n");
 
-        sleep(2);
+        sleep(1);
     }
+
+    printf("Service shutting down...\n");
 
     return 0;
 }

@@ -5,16 +5,23 @@
 int main(void)
 {
     setbuf(stdout, NULL);
+    setbuf(stderr, NULL);
 
-    printf("Logger service started\n");
-
-    for (int i = 1; i <= 30; i++)
+    for (int i = 1; i <= 15; i++)
     {
+        fprintf(stderr,
+                "<3> ERROR log %d\n",
+                i);
+
+        fprintf(stderr,
+                "<4> WARNING log %d\n",
+                i);
+
         fprintf(stderr,
                 "<6> INFO log %d\n",
                 i);
 
-        sleep(1);
+        sleep(2);
     }
 
     fprintf(stderr,

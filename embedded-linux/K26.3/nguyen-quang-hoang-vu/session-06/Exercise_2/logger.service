@@ -2,8 +2,10 @@
 Description=Logger Service
 
 [Service]
+Type=simple
 ExecStart=/usr/local/bin/logger
-Restart=always
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
