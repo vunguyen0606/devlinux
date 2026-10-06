@@ -6,67 +6,97 @@
 #include <sys/un.h>
 
 #define SOCKET_PATH "/tmp/monitor.sock"
+#define BUFFER_SIZE 256
 
 int main(void)
 {
-    int fd;
+	int fd;
+	struct sockaddr_un addr;
 
-    struct sockaddr_un addr;
+	char command[BUFFER_SIZE];
+	char response[BUFFER_SIZE];
 
-    char command[128];
+	while (1)
+	{
+		printf("> ");
 
-    printf("Command (cpu/mem): ");
+		if (fgets(command,
+			  sizeof(command),
+			  stdin) == NULL)
+		{
+			break;
+		}
 
-    scanf("%127s",
-          command);
+		command[strcspn(command, "\n")] = '\0';
 
-    fd = socket(AF_UNIX,
-                SOCK_STREAM,
-                0);
+		fd = socket(AF_UNIX,
+			    SOCK_STREAM,
+			    0);
 
-    if (fd < 0)
-    {
-        perror("socket");
-        return 1;
-    }
+		if (fd < 0)
+		{
+			perror("socket");
+			return 1;
+		}
 
-    memset(&addr,
-           0,
-           sizeof(addr));
+		memset(&addr,
+		       0,
+		       sizeof(addr));
 
-    addr.sun_family =
-        AF_UNIX;
+		addr.sun_family = AF_UNIX;
 
-    strncpy(addr.sun_path,
-            SOCKET_PATH,
-            sizeof(addr.sun_path) - 1);
+		strncpy(addr.sun_path,
+			SOCKET_PATH,
+			sizeof(addr.sun_path) - 1);
 
-    if (connect(fd,
-                (struct sockaddr *)&addr,
-                sizeof(addr))
-        < 0)
-    {
-        perror("connect");
-        return 1;
-    }
+		if (connect(fd,
+			    (struct sockaddr *)&addr,
+			    sizeof(addr))
+		    < 0)
+		{
+			perror("connect");
+			close(fd);
+			return 1;
+		}
 
-    write(fd,
-          command,
-          strlen(command));
+		ssize_t n;
 
-    memset(command,
-           0,
-           sizeof(command));
+		n = write(fd,
+			  command,
+			  strlen(command));
 
-    read(fd,
-         command,
-         sizeof(command));
+		if (n < 0)
+		{
+			perror("write");
+			close(fd);
+			return 1;
+		}
 
-    printf("\n");
-    printf("Response:\n%s\n",
-           command);
+		n = read(fd,
+			 response,
+			 sizeof(response) - 1);
 
-    close(fd);
+		if (n <= 0)
+		{
+			perror("read");
+			close(fd);
+			return 1;
+		}
 
-    return 0;
+		response[n] = '\0';
+
+		printf("%s\n",
+		       response);
+
+		close(fd);
+
+		if (strcmp(command,
+			   "quit")
+		    == 0)
+		{
+			break;
+		}
+	}
+
+	return 0;
 }
