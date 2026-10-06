@@ -1,0 +1,9 @@
+[Unit]
+Description=Simple Monitor Service
+
+[Service]
+ExecStart=/usr/local/bin/monitor
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
